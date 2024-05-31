@@ -27,7 +27,7 @@ const ProbabilitySchema = z.object({
   likelihoodChainOfThought: z.string().describe("Sequential reasoning to determine the correct likelihood"),
   alternativeLikelihoodChainOfThought: z.string().describe("Sequential reasoning to determine the correct alternative likelihood"),
   priorChainOfThought: z.string().describe("Sequential reasoning to determine the correct prior"),
-  posteriorChainOfThought: z.string().describe("Sequential reasoning to determine the correct posterior"),
+  posteriorChainOfThought: z.string().describe("Natural language explanation in this specific context of updating beliefs (hypothesis) based on new evidence"),
   populationNoun: z.string().optional().describe("The noun representing the population, for example 'people' or 'students or 'proportion''"),
   shortDescriptionOfPopulation: z.string().optional().describe("A short description of the population, for example 'all people in the world' or 'students in a classroom' or 'all possible outcomes'"),
   hypothesisEvidence: z.string().optional().describe("A short human readable description of where the hypothesis is true, and the evidence is observed"),

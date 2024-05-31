@@ -171,7 +171,7 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
 
 const examples = [
   {
-      "hypothesis": "Election fraud occurred.",
-      "evidence": "In a small town called Fairview, there’s an election for the mayor’s office. The main candidates are Alice and Bob. On election night, Bob wins by a narrow margin. However, Alice’s supporters suspect election fraud and demand an investigation."
+      "hypothesis": "Steve is a librarian",
+      "evidence": "Steve is very shy and withdrawn, invariably helpful but with very little interest in people or in the world of reality. A meek and tidy soul, he has a need for order and structure, and a passion for detail."
   }
 ]

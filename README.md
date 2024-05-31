@@ -10,6 +10,7 @@
 
 - [3Blue1Brown](https://youtu.be/HZGCoVF3YvM?si=y2nD9T8L5FjWj2co)
 - [shadcn](https://ui.shadcn.com/)
+- [react-resizable-panels](https://github.com/bvaughn/react-resizable-panels)
 - [Next.js](https://nextjs.org/)
 - [Tailwind](https://tailwindcss.com/docs/installation)
 

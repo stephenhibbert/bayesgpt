@@ -40,12 +40,11 @@ export default function Home() {
         , this educational tool uses a Large Language Model (LLM) to calculate
         some rough initial probabilities of a hypothesis given evidence.
       </span>
-      <Alert variant="destructive">
+      <Alert className="max-w-80" variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Warning!</AlertTitle>
         <AlertDescription>
-          The generated numbers are probably hallucinated (made up) by the AI,
-          adjust based on real facts.
+          The generated numbers are probably hallucinated (made up) by the LLM.
         </AlertDescription>
       </Alert>
       <div className="md:grid md:grid-cols-2 md:gap-12">
