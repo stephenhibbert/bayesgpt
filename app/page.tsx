@@ -1,7 +1,6 @@
 // Home.tsx
 "use client";
 
-import Image from "next/image";
 import { TextAreaForm } from "@/components/text-area-form";
 import { Probabilities } from "@/types";
 import { useState } from "react";
@@ -19,10 +18,6 @@ export default function Home() {
 
   const handleChildData = (data: Probabilities) => {
     setProbabilities(data);
-  };
-
-  const resetProbabilities = () => {
-    setProbabilities(undefined);
   };
 
   return (
