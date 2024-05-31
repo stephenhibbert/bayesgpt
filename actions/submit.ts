@@ -6,6 +6,9 @@ import Instructor from "@instructor-ai/instructor";
 import OpenAI from "openai";
 import { z } from "zod";
 import { Probabilities } from '@/types';
+import { kv } from '@vercel/kv';
+
+import { flushCache } from './flushCache';
 
 const oai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY ?? undefined,
@@ -24,6 +27,7 @@ const ProbabilitySchema = z.object({
   likelihoodChainOfThought: z.string().describe("Sequential reasoning to determine the correct likelihood"),
   alternativeLikelihoodChainOfThought: z.string().describe("Sequential reasoning to determine the correct alternative likelihood"),
   priorChainOfThought: z.string().describe("Sequential reasoning to determine the correct prior"),
+  posteriorChainOfThought: z.string().describe("Sequential reasoning to determine the correct posterior"),
   populationNoun: z.string().optional().describe("The noun representing the population, for example 'people' or 'students or 'proportion''"),
   shortDescriptionOfPopulation: z.string().optional().describe("A short description of the population, for example 'all people in the world' or 'students in a classroom' or 'all possible outcomes'"),
   hypothesisEvidence: z.string().optional().describe("A short human readable description of where the hypothesis is true, and the evidence is observed"),
@@ -37,19 +41,19 @@ interface FormData {
   evidence: string;
 }
 
-// In-memory cache
-const cache: Record<string, Probabilities> = {};
-
 export async function submitForm({ hypothesis, evidence }: FormData): Promise<Probabilities> {
   console.log(`Submitting form with hypothesis: ${hypothesis} and evidence: ${evidence}`);
+
+  // await flushCache();
   
   // Generate a cache key based on the hypothesis and evidence
-  const cacheKey = `${hypothesis}|${evidence}`;
+  const cacheKey = `probability:${hypothesis}|${evidence}`;
 
   // Check if the response is already in the cache
-  if (cache[cacheKey]) {
+  const cachedResponse = await kv.get(cacheKey);
+  if (cachedResponse) {
     console.log(`Returning cached response for key: ${cacheKey}`);
-    return cache[cacheKey];
+    return cachedResponse as Probabilities;
   }
 
   const prompt = `You will be estimating the likelihood, prior and probability of simply observing the evidence for a hypothesis given some evidence. 
@@ -85,6 +89,7 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
     P_E_given_H_CoT: "",
     P_H_CoT: "",
     P_E_given_not_H_CoT: "",
+    P_H_given_E_CoT: "",
     P_population_noun: "",
     P_population_description: "",
     hypothesisEvidence: "",
@@ -116,6 +121,7 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
       probabilities.P_E_given_H_CoT = parsedData.likelihoodChainOfThought;
       probabilities.P_H_CoT = parsedData.priorChainOfThought;
       probabilities.P_E_given_not_H_CoT = parsedData.alternativeLikelihoodChainOfThought;
+      probabilities.P_H_given_E_CoT = parsedData.posteriorChainOfThought;
       probabilities.P_population_noun = parsedData.populationNoun ?? "";
       probabilities.P_population_description = parsedData.shortDescriptionOfPopulation ?? "";
       probabilities.hypothesisEvidence = parsedData.hypothesisEvidence ?? "";
@@ -123,8 +129,8 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
       probabilities.notHypothesisEvidence = parsedData.notHypothesisEvidence ?? "";
       probabilities.notHypothesisNotEvidence = parsedData.notHypothesisNotEvidence ?? "";
 
-      // Cache the response
-      cache[cacheKey] = probabilities;
+      // Cache the response in Vercel KV
+      await kv.set(cacheKey, JSON.stringify(probabilities));
     } catch (error) {
       console.error(`Error parsing response:`, error);
     }

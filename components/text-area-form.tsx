@@ -46,6 +46,7 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
     P_H_given_E: 0,
     P_E: 0,
     P_E_given_H_CoT: '',
+    P_H_given_E_CoT: '',
     P_H_CoT: '',
     P_E_given_not_H_CoT: '',
     P_population_noun: '',
@@ -87,6 +88,7 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
       P_E_given_H_CoT: '',
       P_H_CoT: '',
       P_E_given_not_H_CoT: '',
+      P_H_given_E_CoT: '',
       P_population_noun: '',
       P_population_description: '',
       hypothesisEvidence: '',
@@ -169,11 +171,7 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
 
 const examples = [
   {
-    "hypothesis": "John forgot his keys at home.",
-    "evidence": "John is standing outside his locked door and patting his pockets."
-  },
-  {
-    "hypothesis": "Mary won the lottery.",
-    "evidence": "Mary bought a new sports car and a big house last week."
+      "hypothesis": "Election fraud occurred.",
+      "evidence": "In a small town called Fairview, there’s an election for the mayor’s office. The main candidates are Alice and Bob. On election night, Bob wins by a narrow margin. However, Alice’s supporters suspect election fraud and demand an investigation."
   }
 ]
