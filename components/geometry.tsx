@@ -24,6 +24,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
 const ColorIndicator = styled.span`
   display: inline-block;
   width: 10px;
@@ -124,12 +135,30 @@ export const Geometry: React.FC<GeometryProps> = ({ probabilities, onUpdateProba
     onUpdateProbabilities(newProbabilities);
   }
 
+  const items = [
+    {
+      term: <InlineMath math={`P(E|H) \\cdot P(H))`} />,
+      description: probabilities.hypothesisEvidence,
+      value: `${(updatedProbabilities.P_H * updatedProbabilities.P_E_given_H * 100).toFixed(2)}%`,
+      color: 'bg-purple-300'
+    },
+    {
+      term: <InlineMath math={`P(E|\\neg H) \\cdot P(\\neg H)`} />,
+      description: probabilities.notHypothesisEvidence,
+      value: `${(updatedProbabilities.P_E_given_not_H * (1 - updatedProbabilities.P_H) * 100).toFixed(2)}%`,
+      color: 'bg-blue-300'
+    }
+  ]
+
   return (
     <div className="h-full w-full relative">
       <Card className="h-full w-full">
         <CardHeader>
           <CardTitle>Geometry</CardTitle>
           <CardDescription>A geometric representation of the probability mass</CardDescription>
+          <Button variant="secondary" onClick={resetProbabilities}>
+            Reset Probabilities
+          </Button>
         </CardHeader>
         <CardContent className="h-[calc(100vh-150px)] relative">
           <AxisLabel style={{ 
@@ -235,9 +264,24 @@ export const Geometry: React.FC<GeometryProps> = ({ probabilities, onUpdateProba
       </PanelGroup>
     </CardContent>
     <CardFooter>
-      <Button variant="secondary" onClick={resetProbabilities}>
-        Reset Probabilities
-      </Button>
+      <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-[100px]">Term</TableHead>
+          <TableHead>Description</TableHead>          
+          <TableHead className="text-right">Value</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {items.map((item) => (
+          <TableRow className={item.color} key={item.description}>
+            <TableCell>{item.term}</TableCell>
+            <TableCell>{item.description}</TableCell>
+            <TableCell className="text-right">{item.value}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
     </CardFooter>
   </Card>
 </div>

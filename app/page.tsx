@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
 import Sponsor from "@/components/sponsor";
-import BayesCanvas from "@/components/bayes-canvas";
+import Maths from "@/components/maths";
 import { Geometry } from "@/components/geometry";
 import BlurPlaceholder from "@/components/blur";
 
@@ -50,7 +50,7 @@ export default function Home() {
           <BlurPlaceholder />
         )}
         {probabilities ? (
-          <BayesCanvas probabilities={probabilities} />
+          <Maths probabilities={probabilities} />
         ) : (
           <BlurPlaceholder />
         )}

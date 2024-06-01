@@ -22,11 +22,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-interface BayesCanvasProps {
+interface MathsProps {
   probabilities: Probabilities;
 }
 
-const BayesCanvas: React.FC<BayesCanvasProps> = ({ probabilities }) => {
+const Maths: React.FC<MathsProps> = ({ probabilities }) => {
   const items = [
     {
       term: <InlineMath math={`P(E|H)`} />,
@@ -103,4 +103,4 @@ const BayesCanvas: React.FC<BayesCanvasProps> = ({ probabilities }) => {
   );
 };
 
-export default BayesCanvas;
+export default Maths;
