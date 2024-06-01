@@ -23,7 +23,7 @@ export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center m-4 space-x-4 space-y-4">
       <span className="text-6xl font-bold">BayesGPT</span>
-      <span>
+      <span className="max-w-3xl">
         Inspired by{" "}
         <a
           href="https://youtu.be/HZGCoVF3YvM?si=dRC8Fd7VkiJspnGn"
@@ -35,11 +35,11 @@ export default function Home() {
         , this educational tool uses a Large Language Model (LLM) to calculate
         some rough initial probabilities of a hypothesis given evidence.
       </span>
-      <Alert className="max-w-80" variant="destructive">
+      <Alert className="max-w-2xl" variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Warning!</AlertTitle>
         <AlertDescription>
-          The generated numbers are probably hallucinated (made up) by the LLM.
+          The generated prior and likelihood probabilities are a guess, adjust the sliders in the geometry panel to reflect your own beliefs.
         </AlertDescription>
       </Alert>
       <div className="md:grid md:grid-cols-2 md:gap-12">
