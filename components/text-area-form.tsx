@@ -171,7 +171,11 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
 
 const examples = [
   {
-      "hypothesis": "Steve is a librarian",
-      "evidence": "Steve is very shy and withdrawn, invariably helpful but with very little interest in people or in the world of reality. A meek and tidy soul, he has a need for order and structure, and a passion for detail."
+      "hypothesis": "Steve committed market abuse",
+      "evidence": "Steve is a middle-manager at BigCorp. He owns some shares in the company and last week bought 330 shares, increasing his holdings by 20% in a private transaction. He has bought shares privately five times in the last 3 years. Yesterday, BigCorp announced an acquisition of ComputerSystems holdings and their share price increased by 15% overnight."
+  },
+  {
+    "hypothesis": "Steve is a librarian",
+    "evidence": "Steve is very shy and withdrawn, invariably helpful but with very little interest in people or in the world of reality. A meek and tidy soul, he has a need for order and structure, and a passion for detail."
   }
 ]
