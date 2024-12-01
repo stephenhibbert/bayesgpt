@@ -35,6 +35,14 @@ const FormSchema = z.object({
 })
 
 export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities) => void }) {
+  
+  const examples = [
+    {
+        "hypothesis": "Steve is a librarian",
+        "evidence": "Steve is very shy and withdrawn, invariably helpful but with very little interest in people or in the world of reality. A meek and tidy soul, he has a need for order and structure, and a passion for detail."
+    }
+  ]
+  
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
   })
@@ -168,10 +176,3 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
     </Card>
   )
 }
-
-const examples = [
-  {
-      "hypothesis": "Steve is a librarian",
-      "evidence": "Steve is very shy and withdrawn, invariably helpful but with very little interest in people or in the world of reality. A meek and tidy soul, he has a need for order and structure, and a passion for detail."
-  }
-]

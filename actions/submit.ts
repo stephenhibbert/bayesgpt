@@ -4,21 +4,22 @@
 
 import Instructor from "@instructor-ai/instructor";
 import OpenAI from "openai";
+import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { Probabilities } from '@/types';
-import { kv } from '@vercel/kv';
-
-import { flushCache } from './flushCache';
+import { Redis } from '@upstash/redis'
 
 const oai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY ?? undefined,
   organization: process.env.OPENAI_ORG_ID ?? undefined
 });
 
-const client = Instructor({
-  client: oai,
-  mode: "FUNCTIONS"
-});
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+})
+
+const client = new OpenAI();
 
 const ProbabilitySchema = z.object({
   prior: z.string().describe("The estimated prior probability, between 0 and 1"),
@@ -43,14 +44,12 @@ interface FormData {
 
 export async function submitForm({ hypothesis, evidence }: FormData): Promise<Probabilities> {
   console.log(`Submitting form with hypothesis: ${hypothesis} and evidence: ${evidence}`);
-
-  // await flushCache();
   
   // Generate a cache key based on the hypothesis and evidence
   const cacheKey = `probability:${hypothesis}|${evidence}`;
 
   // Check if the response is already in the cache
-  const cachedResponse = await kv.get(cacheKey);
+  const cachedResponse = await redis.get(cacheKey);
   if (cachedResponse) {
     console.log(`Returning cached response for key: ${cacheKey}`);
     return cachedResponse as Probabilities;
@@ -98,21 +97,19 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
     notHypothesisNotEvidence: ""
   };
 
-  const response = await client.chat.completions.create({
+  const completion = await client.beta.chat.completions.parse({
     messages: [
       { role: "user", content: prompt }
     ],
-    model: "gpt-4o",
-    response_model: {
-      schema: ProbabilitySchema,
-      name: "Probability"
-    }
+    model: "gpt-4o-2024-08-06",
+    response_format: zodResponseFormat(ProbabilitySchema, "Probability"),
   });
 
-  if (response) {
-    console.log(`Received response:`, response);
+  const parsedData = completion.choices[0].message.parsed;
+
+  if (parsedData) {
+    console.log(`Received response:`, parsedData);
     try {
-      const parsedData = ProbabilitySchema.parse(response);
       probabilities.P_E_given_H = parseFloat(parsedData.likelihood);
       probabilities.P_E_given_not_H = parseFloat(parsedData.alternativeLikelihood);
       probabilities.P_H = parseFloat(parsedData.prior);
@@ -130,7 +127,7 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
       probabilities.notHypothesisNotEvidence = parsedData.notHypothesisNotEvidence ?? "";
 
       // Cache the response in Vercel KV
-      await kv.set(cacheKey, JSON.stringify(probabilities));
+      await redis.set(cacheKey, JSON.stringify(probabilities));
     } catch (error) {
       console.error(`Error parsing response:`, error);
     }
@@ -139,6 +136,9 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
   }
 
   console.log(`Returning probabilities:`, probabilities);
+
+  // Save the response in the cache
+  await redis.set(cacheKey, JSON.stringify(probabilities));
 
   return probabilities;
 }
