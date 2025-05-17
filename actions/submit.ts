@@ -2,7 +2,6 @@
 
 'use server';
 
-import Instructor from "@instructor-ai/instructor";
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
@@ -21,6 +20,9 @@ const redis = new Redis({
 
 const client = new OpenAI();
 
+// Key for tracking the last ping time
+const PING_KEY = 'last_ping_time';
+
 const ProbabilitySchema = z.object({
   prior: z.string().describe("The estimated prior probability, between 0 and 1"),
   likelihood: z.string().describe("The estimated likelihood probability, between 0 and 1"),
@@ -28,13 +30,12 @@ const ProbabilitySchema = z.object({
   likelihoodChainOfThought: z.string().describe("Sequential reasoning to determine the correct likelihood"),
   alternativeLikelihoodChainOfThought: z.string().describe("Sequential reasoning to determine the correct alternative likelihood"),
   priorChainOfThought: z.string().describe("Sequential reasoning to determine the correct prior"),
-  posteriorChainOfThought: z.string().describe("Natural language explanation in this specific context of updating beliefs (hypothesis) based on new evidence"),
-  populationNoun: z.string().optional().describe("The noun representing the population, for example 'people' or 'students or 'proportion''"),
-  shortDescriptionOfPopulation: z.string().optional().describe("A short description of the population, for example 'all people in the world' or 'students in a classroom' or 'all possible outcomes'"),
-  hypothesisEvidence: z.string().optional().describe("A short human readable description of where the hypothesis is true, and the evidence is observed"),
-  hypothesisNotEvidence: z.string().optional().describe("A short human readable description of where the hypothesis is true, and the evidence is not observed"),
-  notHypothesisEvidence: z.string().optional().describe("A short human readable description of where the hypothesis is false, and the evidence is observed"),
-  notHypothesisNotEvidence: z.string().optional().describe("A short human readable description of where the hypothesis is false, and the evidence is not observed"),
+  populationNoun: z.string().describe("The noun representing the population, for example 'people' or 'students or 'proportion''"),
+  shortDescriptionOfPopulation: z.string().describe("A short description of the population, for example 'all people in the world' or 'students in a classroom' or 'all possible outcomes'"),
+  hypothesisEvidence: z.string().describe("A short human readable description of where the hypothesis is true, and the evidence is observed"),
+  hypothesisNotEvidence: z.string().describe("A short human readable description of where the hypothesis is true, and the evidence is not observed"),
+  notHypothesisEvidence: z.string().describe("A short human readable description of where the hypothesis is false, and the evidence is observed"),
+  notHypothesisNotEvidence: z.string().describe("A short human readable description of where the hypothesis is false, and the evidence is not observed"),
 });
 
 interface FormData {
@@ -42,8 +43,47 @@ interface FormData {
   evidence: string;
 }
 
+// Function to keep Redis cache alive with a daily ping
+async function pingCache() {
+  try {
+    const now = new Date().toISOString();
+    await redis.set(PING_KEY, now);
+    console.log(`Cache pinged at ${now}`);
+    return true;
+  } catch (error) {
+    console.error('Failed to ping cache:', error);
+    return false;
+  }
+}
+
+// Function to retrieve all cached scenarios
+export async function getCachedScenarios(): Promise<{ hypothesis: string, evidence: string }[]> {
+  try {
+    // Get all keys matching the probability: prefix
+    const keys = await redis.keys('probability:*');
+    
+    // Parse the keys to extract hypothesis and evidence
+    const scenarios = keys.map(key => {
+      // Remove the 'probability:' prefix and split by the delimiter
+      const parts = key.substring(12).split('|');
+      return {
+        hypothesis: parts[0],
+        evidence: parts[1] || '' // Handle cases where evidence might be missing
+      };
+    });
+    
+    return scenarios;
+  } catch (error) {
+    console.error('Failed to fetch cached scenarios:', error);
+    return [];
+  }
+}
+
 export async function submitForm({ hypothesis, evidence }: FormData): Promise<Probabilities> {
   console.log(`Submitting form with hypothesis: ${hypothesis} and evidence: ${evidence}`);
+  
+  // Ping the cache to keep it active
+  await pingCache();
   
   // Generate a cache key based on the hypothesis and evidence
   const cacheKey = `probability:${hypothesis}|${evidence}`;
@@ -118,7 +158,6 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
       probabilities.P_E_given_H_CoT = parsedData.likelihoodChainOfThought;
       probabilities.P_H_CoT = parsedData.priorChainOfThought;
       probabilities.P_E_given_not_H_CoT = parsedData.alternativeLikelihoodChainOfThought;
-      probabilities.P_H_given_E_CoT = parsedData.posteriorChainOfThought;
       probabilities.P_population_noun = parsedData.populationNoun ?? "";
       probabilities.P_population_description = parsedData.shortDescriptionOfPopulation ?? "";
       probabilities.hypothesisEvidence = parsedData.hypothesisEvidence ?? "";
@@ -128,6 +167,7 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
 
       // Cache the response in Vercel KV
       await redis.set(cacheKey, JSON.stringify(probabilities));
+      console.log(`Saved response to cache with key: ${cacheKey}`);
     } catch (error) {
       console.error(`Error parsing response:`, error);
     }
@@ -136,9 +176,6 @@ export async function submitForm({ hypothesis, evidence }: FormData): Promise<Pr
   }
 
   console.log(`Returning probabilities:`, probabilities);
-
-  // Save the response in the cache
-  await redis.set(cacheKey, JSON.stringify(probabilities));
 
   return probabilities;
 }

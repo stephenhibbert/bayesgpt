@@ -28,8 +28,6 @@ const Reasoning: React.FC<ReasoningProps> = ({ probabilities }) => {
       <Textarea placeholder={probabilities.P_E_given_H_CoT} disabled />
     <CardDescription>Alternative Likelihood</CardDescription>
       <Textarea placeholder={probabilities.P_E_given_not_H_CoT} disabled />
-    <CardDescription>Posterior</CardDescription>
-      <Textarea placeholder={probabilities.P_H_given_E_CoT} disabled />
     </CardContent>
   </Card>
   );

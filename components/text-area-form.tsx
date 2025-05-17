@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Probabilities } from '@/types';
-import { submitForm } from '@/actions/submit';
+import { submitForm, getCachedScenarios } from '@/actions/submit';
 import {
   Card,
   CardContent,
@@ -36,12 +36,45 @@ const FormSchema = z.object({
 
 export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities) => void }) {
   
-  const examples = [
+  const defaultExamples = [
     {
         "hypothesis": "Steve is a librarian",
         "evidence": "Steve is very shy and withdrawn, invariably helpful but with very little interest in people or in the world of reality. A meek and tidy soul, he has a need for order and structure, and a passion for detail."
     }
-  ]
+  ];
+  
+  const [examples, setExamples] = useState(defaultExamples);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Load cached scenarios when component mounts
+  useEffect(() => {
+    async function loadCachedScenarios() {
+      try {
+        setIsLoading(true);
+        const cachedScenarios = await getCachedScenarios();
+        
+        // Combine default examples with cached scenarios
+        // Filter out duplicates based on hypothesis
+        const allScenarios = [...defaultExamples];
+        const existingHypotheses = new Set(defaultExamples.map(ex => ex.hypothesis));
+        
+        cachedScenarios.forEach(scenario => {
+          if (!existingHypotheses.has(scenario.hypothesis)) {
+            allScenarios.push(scenario);
+            existingHypotheses.add(scenario.hypothesis);
+          }
+        });
+        
+        setExamples(allScenarios);
+      } catch (error) {
+        console.error("Failed to load cached scenarios:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    loadCachedScenarios();
+  }, []);
   
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -121,18 +154,30 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
     <Card>
       <CardHeader>
         <CardTitle>Scenario</CardTitle>
-        <CardDescription></CardDescription>
-        <Select onValueChange={handleSelect}>
+        <CardDescription>{isLoading ? "Loading scenarios..." : `${examples.length} scenarios available`}</CardDescription>
+        <Select onValueChange={handleSelect} disabled={isLoading}>
           <SelectTrigger className="w-[280px]">
-            <SelectValue placeholder="Select a scenario" />
+            <SelectValue placeholder={isLoading ? "Loading scenarios..." : "Select a scenario"} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {examples.map((example, index) => (
-                <SelectItem key={index} value={example.hypothesis}>
+              <SelectLabel>Predefined Examples</SelectLabel>
+              {defaultExamples.map((example, index) => (
+                <SelectItem key={`default-${index}`} value={example.hypothesis}>
                   {example.hypothesis}
                 </SelectItem>
               ))}
+              
+              {examples.length > defaultExamples.length && (
+                <>
+                  <SelectLabel className="mt-2">Cached Scenarios</SelectLabel>
+                  {examples.slice(defaultExamples.length).map((example, index) => (
+                    <SelectItem key={`cached-${index}`} value={example.hypothesis}>
+                      {example.hypothesis}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
             </SelectGroup>
           </SelectContent>
         </Select>
