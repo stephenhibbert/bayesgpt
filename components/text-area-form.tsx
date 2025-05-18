@@ -161,7 +161,6 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              <SelectLabel>Predefined Examples</SelectLabel>
               {defaultExamples.map((example, index) => (
                 <SelectItem key={`default-${index}`} value={example.hypothesis}>
                   {example.hypothesis}
@@ -170,7 +169,6 @@ export function TextAreaForm({ onSendData }: { onSendData: (data: Probabilities)
               
               {examples.length > defaultExamples.length && (
                 <>
-                  <SelectLabel className="mt-2">Cached Scenarios</SelectLabel>
                   {examples.slice(defaultExamples.length).map((example, index) => (
                     <SelectItem key={`cached-${index}`} value={example.hypothesis}>
                       {example.hypothesis}
